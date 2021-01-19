@@ -1,0 +1,44 @@
+#!/bin/bash
+
+args=''
+
+print_usage() {
+  printf "Usage: waccit [flags] filename\n"
+  printf "  -i INPUT\tstdin\n"
+  printf "  -p\t\tparse only\n"
+  printf "  -s\t\tsemantic check\n"
+  printf "  -t\t\tview AST\n"
+  printf "  -a\t\tview assembly\n"
+  printf "  -S\t\tstack implementation\n"
+  printf "  -o [1-5]\toptimise\n"
+  printf "  -x\t\texecute\n"
+}
+
+while getopts 'i:pstaSo:x' flag; do
+  case "${flag}" in
+    i) args="$args -F \"stdin=${OPTARG}\"" ;;
+    p) args="$args -F \"options[]=-p\"" ;;
+    s) args="$args -F \"options[]=-s\"" ;;
+    t) args="$args -F \"options[]=-t\"" ;;
+    a) args="$args -F \"options[]=-a\"" ;;
+    S) args="$args -F \"options[]=-S\"" ;;
+    o) args="$args -F \"options[]=-o\" -F \"options[]=${OPTARG}\"" ;;
+    x) args="$args -F \"options[]=-x\"" ;;
+    *) print_usage
+       exit 1 ;;
+  esac
+done
+
+filename=${@:$OPTIND:1}
+
+cmd="curl -s $args -F \"run=\" -F \"testfile=@$filename\" \"https://teaching.doc.ic.ac.uk/wacc_compiler/run.cgi\""
+
+response=$(eval $cmd)
+
+echo "Upload"
+echo "-------"
+echo $response | jq -r '.upload'
+
+echo "Compiler out"
+echo "------------"
+echo $response | jq -r '.compiler_out'
