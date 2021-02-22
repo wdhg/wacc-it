@@ -33,12 +33,12 @@ filename=${@:$OPTIND:1}
 
 cmd="curl -s $args -F \"run=\" -F \"testfile=@$filename\" \"https://teaching.doc.ic.ac.uk/wacc_compiler/run.cgi\""
 
-response=$(eval $cmd)
+response=$(eval "$cmd")
 
 echo "Upload"
 echo "-------"
-echo $response | jq -r '.upload'
+echo "$response" | jq -r '.upload'
 
 echo "Compiler out"
 echo "------------"
-echo $response | jq -r '.compiler_out'
+echo "$response" | jq -r '.compiler_out'
