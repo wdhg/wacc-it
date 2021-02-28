@@ -1,6 +1,7 @@
 #!/bin/bash
 
 args=''
+filter=''
 
 print_usage() {
   printf "Usage: waccit [flags] filename\n"
@@ -9,18 +10,21 @@ print_usage() {
   printf "  -s\t\tsemantic check\n"
   printf "  -t\t\tview AST\n"
   printf "  -a\t\tview assembly\n"
+  printf "  -A\t\tview assembly without line numbers or extra information\n"
   printf "  -S\t\tstack implementation\n"
   printf "  -o [1-5]\toptimise\n"
   printf "  -x\t\texecute\n"
 }
 
-while getopts 'i:pstaSo:x' flag; do
+while getopts 'i:pstaASo:x' flag; do
   case "${flag}" in
     i) args="$args -F \"stdin=${OPTARG}\"" ;;
     p) args="$args -F \"options[]=-p\"" ;;
     s) args="$args -F \"options[]=-s\"" ;;
     t) args="$args -F \"options[]=-t\"" ;;
     a) args="$args -F \"options[]=-a\"" ;;
+    A) args="$args -F \"options[]=-a\""
+       filter="grep -P '^[0-9]+\t' | sed 's/[0-9]\+\t//'" ;;
     S) args="$args -F \"options[]=-S\"" ;;
     o) args="$args -F \"options[]=-o\" -F \"options[]=${OPTARG}\"" ;;
     x) args="$args -F \"options[]=-x\"" ;;
@@ -35,10 +39,15 @@ cmd="curl -s $args -F \"run=\" -F \"testfile=@$filename\" \"https://teaching.doc
 
 response=$(eval "$cmd")
 
-echo "Upload"
-echo "-------"
-echo "$response" | jq -r '.upload'
+if [[ -z $filter ]]
+then
+  echo "Upload"
+  echo "-------"
+  echo "$response" | jq -r '.upload'
 
-echo "Compiler out"
-echo "------------"
-echo "$response" | jq -r '.compiler_out'
+  echo "Compiler out"
+  echo "------------"
+  echo "$response" | jq -r '.compiler_out'
+else
+  echo "$response" | jq -r '.compiler_out' | eval "$filter"
+fi
